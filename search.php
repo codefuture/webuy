@@ -31,6 +31,10 @@ if (strlen($term) == 0)
 }
 else
 {
+	$template->assign_vars(array(
+			'ERROR' => '',
+			));
+
 	$catSQL = '';
 	if ($cat_id > 0)
 	{
