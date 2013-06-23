@@ -192,13 +192,14 @@ $(document).ready(function(){
 	<!-- ENDIF -->
 });
 </script>
-<!-- ENDIF -->
+
 <!-- IF ATYPE_PLAIN eq 2 -->
 <style type="text/css">
 .dutchhide {
 	display: none;
 }
 </style>
+<!-- ENDIF -->
 <!-- ENDIF -->
 <div class="content">
 	<div class="tableContent2">

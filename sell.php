@@ -326,7 +326,8 @@ switch ($_SESSION['action'])
 					'TITLE' => $MSG['028'],
 					'PAGE' => 3,
 					'AUCTION_ID' => $auction_id,
-					'MESSAGE' => sprintf($MSG['102'], $auction_id, date('D j M \a\t g:ia', $a_ends))
+					'MESSAGE' => sprintf($MSG['102'], $auction_id, date('D j M \a\t g:ia', $a_ends)),
+					'ERROR' => ''
 					));
 			break;
 		}
