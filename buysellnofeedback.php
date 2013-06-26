@@ -31,7 +31,7 @@ $query = "SELECT DISTINCT a.auction, a.seller, a.winner, a.bid, b.id, b.current_
 $res = mysql_query($query);
 $system->check_mysql($res, $query, __LINE__, __FILE__);
 
-$k = 0;
+$i = 0;
 while ($row = mysql_fetch_array($res))
 {
 	$them = ($row['winner'] == $user->user_data['id']) ? $row['seller'] : $row['winner'];
@@ -43,8 +43,8 @@ while ($row = mysql_fetch_array($res))
 	$system->check_mysql($re_, $query, __LINE__, __FILE__);
 
 	$template->assign_block_vars('fbs', array(
+			'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
 			'ID' => $row['id'],
-			'ROWCOLOUR' => ($k % 2) ? 'bgcolor="#FFFEEE"' : '',
 			'TITLE' => $row['title'],
 			'WINORSELLNICK' => mysql_result($re_, 0, 'nick'),
 			'WINORSELL' => ($row['winner'] == $user->user_data['id']) ? $MSG['25_0002'] : $MSG['25_0001'],
@@ -57,11 +57,10 @@ while ($row = mysql_fetch_array($res))
 			'CLOSINGDATE' => FormatDate($row['closingdate']),
 			'WS' => ($row['winner'] == $user->user_data['id']) ? 'w' : 's'
 			));
-	$k++;
 }
 
 $template->assign_vars(array(
-		'NUM_AUCTIONS' => $k
+		'NUM_AUCTIONS' => $i
 		));
 
 $TPL_rater_nick = $user->user_data['nick'];

@@ -24,7 +24,7 @@
 					<td width="15%">{L_364}</td>
 				</tr>
 <!-- BEGIN fbs -->
-				<tr {fbs.BGCOLOUR}>
+				<tr class="{fbs.ODD_EVEN}">
 					<td>
 						<img src="{fbs.IMG}" align="middle" alt="">
 					</td>

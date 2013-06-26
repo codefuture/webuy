@@ -60,6 +60,9 @@ input {
 	padding-right: 2px;
 }
 
+tr.odd{background:#f5f5f5}
+tr.even{background:#fff}
+
 td {
 	padding: 3px;
 }

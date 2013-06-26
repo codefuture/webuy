@@ -41,9 +41,11 @@ include 'common.php';
 	$res = mysql_query($query);
 	$system->check_mysql($res, $query, __LINE__, __FILE__);
 
+	$i=0;
 while ($row = mysql_fetch_assoc($res))
 {
 	$template->assign_block_vars('to_pay', array(
+			'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
 			'URL' => $system->SETTINGS['siteurl'] . 'item.php?id=' . $row['id'],
 			'TITLE' => $row['title'],
 			'SHIPPING' => ($row['shipping'] == 2) ? $system->print_money($row['shipping_cost']) : $system->print_money(0),

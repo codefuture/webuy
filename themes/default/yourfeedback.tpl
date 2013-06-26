@@ -7,7 +7,7 @@
 		</td>
 	</tr>
 <!-- BEGIN fbs -->
-	<tr {fbs.BGCOLOUR}>
+	<tr class="{fbs.ODD_EVEN}">
 		<td valign="top">
 			<img src="{fbs.IMG}" align="middle" alt="">
 		</td>

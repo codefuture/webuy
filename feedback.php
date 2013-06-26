@@ -227,7 +227,7 @@ if (isset($_GET['faction']) && $_GET['faction'] == 'show')
 				break;
 		}
 		$template->assign_block_vars('fbs', array(
-				'BGCOLOUR' => (!($i % 2)) ? '' : 'class="alt-row"',
+				'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
 				'IMG' => $uimg,
 				'USFLINK' => 'profile.php?user_id=' . $arrfeed['uId'] . '&auction_id=' . $arrfeed['auction_id'],
 				'USERID' => $arrfeed['uId'],
@@ -238,7 +238,6 @@ if (isset($_GET['faction']) && $_GET['faction'] == 'show')
 				'AUCTIONURL' => ($arrfeed['title']) ? '<a href="item.php?id=' . $arrfeed['auction_id'] . '">' . $arrfeed['title'] . '</a>' : $MSG['113'] . $arrfeed['auction_id'],
 				'FEEDBACK' => nl2br(stripslashes($arrfeed['feedback']))
 				));
-		$i++;
 	}
 	$thispage = (isset($_GET['pg'])) ? $_GET['pg'] : 1;
 	$firstpage = (($thispage - 5) <= 0) ? 1 : ($thispage - 5);

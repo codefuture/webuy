@@ -114,7 +114,7 @@ $i = 0;
 while ($item = mysql_fetch_array($res))
 {
 	$template->assign_block_vars('items', array(
-			'BGCOLOUR' => (!($i % 2)) ? '' : 'class="alt-row"',
+			'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
 			'ID' => $item['id'],
 			'TITLE' => $item['title'],
 			'BID' => $system->print_money($item['current_bid']),
@@ -130,7 +130,6 @@ while ($item = mysql_fetch_array($res))
 
 
 $template->assign_vars(array(
-		'BGCOLOUR' => (!($i % 2)) ? '' : 'class="alt-row"',
 		'ORDERCOL' => $_SESSION['sa_ord'],
 		'ORDERNEXT' => $_SESSION['sa_nexttype'],
 		'ORDERTYPEIMG' => $_SESSION['sa_type_img'],

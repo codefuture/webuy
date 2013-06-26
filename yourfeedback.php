@@ -69,7 +69,7 @@ while ($arrfeed = mysql_fetch_assoc($res))
 			break;
 	}
 	$template->assign_block_vars('fbs', array(
-			'BGCOLOUR' => (!(($i + 1) % 2)) ? '' : 'class="alt-row"',
+			'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
 			'IMG' => $uimg,
 			'USFLINK' => 'profile.php?user_id=' . $usarr['id'] . '&auction_id=' . $arrfeed['auction_id'],
 			'USERNAME' => $arrfeed['rater_user_nick'],
@@ -80,7 +80,6 @@ while ($arrfeed = mysql_fetch_assoc($res))
 			'FEEDBACK' => nl2br(stripslashes($arrfeed['feedback']))
 			));
 
-	$i++;
 }
 
 include $include_path . 'membertypes.inc.php';

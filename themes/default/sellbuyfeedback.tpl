@@ -20,7 +20,7 @@
 		</th>
 	</tr>
 	<!-- BEGIN fbs -->
-	<tr {fbs.ROWCOLOUR}>
+	<tr class="{fbs.ODD_EVEN}">
 		<td>
 			<b><a href="item.php?id={fbs.ID}" target="_blank">{fbs.TITLE}</a></b><br />
 			<b>{L_869}:</b> {fbs.CLOSINGDATE}

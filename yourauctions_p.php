@@ -135,7 +135,7 @@ $i = 0;
 while ($item = mysql_fetch_array($res))
 {
 	$template->assign_block_vars('items', array(
-			'BGCOLOUR' => (!($i % 2)) ? '' : 'class="alt-row"',
+			'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
 			'ID' => $item['id'],
 			'TITLE' => $item['title'],
 			'STARTS' => FormatDate($item['starts']),
@@ -143,12 +143,10 @@ while ($item = mysql_fetch_array($res))
 
 			'B_HASNOBIDS' => ($item['current_bid'] == 0)
 			));
-	$i++;
 }
 
 
 $template->assign_vars(array(
-		'BGCOLOUR' => (!($i % 2)) ? '' : 'class="alt-row"',
 		'ORDERCOL' => $_SESSION['pa_ord'],
 		'ORDERNEXT' => $_SESSION['pa_nexttype'],
 		'ORDERTYPEIMG' => $_SESSION['pa_type_img'],

@@ -24,7 +24,7 @@
     <td style="text-align: center;">&nbsp;</td>
 </tr>
 <!-- BEGIN to_pay -->
-<tr>
+<tr class="{to_pay.ODD_EVEN}">
     <td style="text-align: center;">
     <!-- IF to_pay.B_NOTITLE -->
     	{L_113} {to_pay.ID}
@@ -40,14 +40,13 @@
 		<br><br><b>{L_350_1009}</b><br>{to_pay.ADDITIONAL_SHIPPING} X {to_pay.ADDITIONAL_SHIPPING_QUANTITYS} =<br>{to_pay.ADDITIONAL_SHIPPING_COST}</td> 
 		<td style="text-align: center;">{to_pay.TOTAL}
 	</td>
-    <td style="text-align: center; background-color: #FFFFaa;">
+    <td>
     	<form name="" method="post" action="{SITEURL}pay.php?a=2" id="fees">
         <input type="hidden" name="csrftoken" value="{_CSRFTOKEN}">
     	<input type="hidden" name="pfval" value="{to_pay.ID}">
         <input type="submit" name="Pay" value="{L_756}" class="pay">
         </form>
-    </td>
-    <td style="text-align: center; background-color: #FFFFaa;">
+
     <form name="" method="post" action="{SITEURL}order_print.php" id="fees" title="Print Invoice" target="_blank">
         <input type="hidden" name="csrftoken" value="{_CSRFTOKEN}">
     	<input type="hidden" name="pfval" value="{to_pay.ID}">
