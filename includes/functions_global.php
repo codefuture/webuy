@@ -380,4 +380,38 @@ function strip_non_an_chars($str)
 	$str = preg_replace("/[^a-zA-Z0-9\s]/", '', $str);
 	return $str;
 }
+
+
+/**
+ * pagination($pageOn,$itemsOnPage,$itemCount,$pageAddress,$numberOfPageLinks = null)
+ */
+function pagination($pageOn,$itemsOnPage,$itemCount,$pageAddress,$numberOfPageLinks = null){
+	global $MSG;
+	$itemCount = ($itemCount > 0? $itemCount: 1);
+	
+// the number of links to show
+	if(is_null($numberOfPageLinks))$numberOfPageLinks = 11;
+
+// work out the No. of Pages
+	$noOfPages = ceil($itemCount/$itemsOnPage);
+
+// On page * of **
+	$pagination = '<div class="pagination"><span class="pagecount">'.$MSG['5117'].'&nbsp;'.$pageOn.'&nbsp;'.$MSG['5118'].'&nbsp;'. $noOfPages.'</span>';
+
+//first and prev buttons
+	$pagination.= ($pageOn>1) ? '<a href="'.sprintf($pageAddress, 1).'" title="">&lt;&lt;</a><a href="'.sprintf($pageAddress, ($pageOn-1)).'" title="">&lt;</a>':'';
+
+	$numberToList = $noOfPages > ($numberOfPageLinks-1) ? ($numberOfPageLinks-1) :($noOfPages-1);
+	$listStart = (($pageOn-(($numberOfPageLinks-1)/2)) < 1) ? 1 : (($pageOn+(($numberOfPageLinks-1)/2))>$noOfPages ? ($noOfPages-$numberToList):($pageOn-(($numberOfPageLinks-1)/2)));
+
+	for ($i = $listStart; $i <= ($listStart+$numberToList); $i++) {
+		$pagination .=($i==$pageOn ? '<span class="current">'.$i.'</span>':'<a href="'.sprintf($pageAddress, $i).'" title="'.$i.'">'.$i.'</a>');
+	}
+
+// next and last pages
+	$pagination .= ($pageOn) < $noOfPages ? '<a href="'.sprintf($pageAddress, ($pageOn+1)).'" title="">&gt;</a><a href="'.sprintf($pageAddress, $noOfPages).'" title="">&gt;&gt;</a>':'';
+	$pagination .='</div>';
+
+	return $pagination;
+}
 ?>

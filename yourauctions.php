@@ -15,15 +15,18 @@
 include 'common.php';
 
 // If user is not logged in redirect to login page
-if (!$user->is_logged_in())
-{
-	$_SESSION['REDIRECT_AFTER_LOGIN'] = 'yourauctions.php';
-	header('location: user_login.php');
-	exit;
-}
+	if (!$user->is_logged_in()){
+		$_SESSION['REDIRECT_AFTER_LOGIN'] = 'yourauctions.php';
+		header('location: user_login.php');
+		exit;
+	}
+
+// whats the page number
+	$page_on = (!isset($_GET['p']) || $_GET['p'] == 0) ? 1:$_GET['p'];
 
 $NOW = time();
 $NOWB = gmdate('Ymd');
+
 // DELETE OR CLOSE OPEN AUCTIONS
 if (isset($_POST['action']) && $_POST['action'] == 'delopenauctions')
 {
@@ -73,22 +76,11 @@ if (isset($_POST['action']) && $_POST['action'] == 'delopenauctions')
 	}
 }
 // Retrieve active auctions from the database
-$query = "SELECT count(id) AS COUNT FROM " . $DBPrefix . "auctions WHERE user = " . $user->user_data['id'] . " AND closed = 0 AND starts <= " . $NOW . " AND suspended = 0";
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
-$TOTALAUCTIONS = mysql_result($res, 0, 'COUNT');
+	$query = "SELECT count(id) AS COUNT FROM " . $DBPrefix . "auctions WHERE user = " . $user->user_data['id'] . " AND closed = 0 AND starts <= " . $NOW . " AND suspended = 0";
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
+	$total = mysql_result($res, 0, 'COUNT');
 
-if (!isset($_GET['PAGE']) || $_GET['PAGE'] <= 1 || $_GET['PAGE'] == '')
-{
-	$OFFSET = 0;
-	$PAGE = 1;
-}
-else
-{
-	$PAGE = intval($_GET['PAGE']);
-	$OFFSET = ($PAGE - 1) * $system->SETTINGS['perpage'];
-}
-$PAGES = ($TOTALAUCTIONS == 0) ? 1 : ceil($TOTALAUCTIONS / $system->SETTINGS['perpage']);
 // Handle columns sorting variables
 if (!isset($_SESSION['oa_ord']) && empty($_GET['oa_ord']))
 {
@@ -120,12 +112,15 @@ else
 	$_SESSION['oa_type_img'] = '<img src="images/arrow_down.gif" align="center" hspace="2" border="0" />';
 }
 
-$query = "SELECT * FROM " . $DBPrefix . "auctions
-		WHERE user = " . $user->user_data['id'] . " AND closed = 0
-		AND starts <= '" . $NOW . "' AND suspended = 0
-		ORDER BY " . $_SESSION['oa_ord'] . " " . $_SESSION['oa_type'] . " LIMIT " . intval($OFFSET) . "," . $system->SETTINGS['perpage'];
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
+// get this page of data
+	$offset = ($page_on - 1) * $system->SETTINGS['perpage'];
+	$offset = ($offset < 0) ? 0 : $offset;
+	$query = "SELECT * FROM " . $DBPrefix . "auctions
+			WHERE user = " . $user->user_data['id'] . " AND closed = 0
+			AND starts <= '" . $NOW . "' AND suspended = 0
+			ORDER BY " . $_SESSION['oa_ord'] . " " . $_SESSION['oa_type'] . " LIMIT $offset," . $system->SETTINGS['perpage'];
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
 
 $i = 0;
 while ($item = mysql_fetch_array($res))
@@ -169,33 +164,14 @@ while ($item = mysql_fetch_array($res))
 			));
 	$i++;
 }
-// get pagenation
-$PREV = intval($PAGE - 1);
-$NEXT = intval($PAGE + 1);
-if ($PAGES > 1)
-{
-	$LOW = $PAGE - 5;
-	if ($LOW <= 0) $LOW = 1;
-	$COUNTER = $LOW;
-	while ($COUNTER <= $PAGES && $COUNTER < ($PAGE + 6))
-	{
-		$template->assign_block_vars('pages', array(
-				'PAGE' => ($PAGE == $COUNTER) ? '<b>' . $COUNTER . '</b>' : '<a href="' . $system->SETTINGS['siteurl'] . 'yourauctions.php?PAGE=' . $COUNTER . '"><u>' . $COUNTER . '</u></a>'
-				));
-		$COUNTER++;
-	}
-}
+
 
 $template->assign_vars(array(
 		'BGCOLOUR' => (!($i % 2)) ? '' : 'class="alt-row"',
 		'ORDERCOL' => $_SESSION['oa_ord'],
 		'ORDERNEXT' => $_SESSION['oa_nexttype'],
 		'ORDERTYPEIMG' => $_SESSION['oa_type_img'],
-
-		'PREV' => ($PAGES > 1 && $PAGE > 1) ? '<a href="' . $system->SETTINGS['siteurl'] . 'yourauctions.php?PAGE=' . $PREV . '"><u>' . $MSG['5119'] . '</u></a>&nbsp;&nbsp;' : '',
-		'NEXT' => ($PAGE < $PAGES) ? '<a href="' . $system->SETTINGS['siteurl'] . 'yourauctions.php?PAGE=' . $NEXT . '"><u>' . $MSG['5120'] . '</u></a>' : '',
-		'PAGE' => $PAGE,
-		'PAGES' => $PAGES,
+		'PAGINATION' => pagination($page_on,$system->SETTINGS['perpage'],$total,'yourauctions.php?p=%1$s'),
 
 		'B_AREITEMS' => ($i > 0)
 		));

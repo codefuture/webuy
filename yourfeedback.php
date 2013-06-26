@@ -13,51 +13,34 @@
  ***************************************************************************/
 
 include 'common.php';
-include $include_path . 'membertypes.inc.php';
 
-foreach ($membertypes as $idm => $memtypearr)
-{
-	$memtypesarr[$memtypearr['feedbacks']] = $memtypearr;
-}
-ksort($memtypesarr, SORT_NUMERIC);
-
-if (!$user->is_logged_in())
-{
-	$_SESSION['REDIRECT_AFTER_LOGIN'] = 'yourfeedback.php';
-	header('location: user_login.php');
-	exit;
-}
-
-$i = 0;
-foreach ($memtypesarr as $k => $l)
-{
-	if ($k >= $user->user_data['rate_sum'] || $i++ == (count($memtypesarr) - 1))
-	{
-		$TPL_rate_ratio_value = '<img src="' . $system->SETTINGS['siteurl'] . 'images/icons/' . $l['icon'] . '" alt="' . $l['icon'] . '" class="fbstar">';
-		break;
+// if user is not logged in redirect to login page
+	if (!$user->is_logged_in()){
+		$_SESSION['REDIRECT_AFTER_LOGIN'] = 'yourfeedback.php';
+		header('location: user_login.php');
+		exit;
 	}
-}
 
-$page = (!isset($_GET['pg']) || $_GET['pg'] == 0) ? $_GET['pg'] : 1;
-$left_limit = ($page - 1) * $system->SETTINGS['perpage'];
+// whats the page number
+	$page_on = (!isset($_GET['p']) || $_GET['p'] == 0) ? 1:$_GET['p'];
 
-$query = "SELECT count(*) FROM " . $DBPrefix . "feedbacks WHERE rated_user_id = " . $user->user_data['id'];
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
-$total = mysql_result($res, 0);
-// get number of pages
-$pages = ceil($total / $system->SETTINGS['perpage']);
+// count the pages
+	$query = "SELECT COUNT(rated_user_id) FROM " . $DBPrefix . "feedbacks WHERE rated_user_id = " . $user->user_data['id'];
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
+	$total = mysql_result($res, 0);
 
-$left_limit = ($left_limit < 0) ? 0 : $left_limit;
-
-$query = "SELECT f.*, a.title FROM " . $DBPrefix . "feedbacks f
-		LEFT OUTER JOIN " . $DBPrefix . "auctions a
-		ON a.id = f.auction_id
-		WHERE rated_user_id = " . $user->user_data['id'] . "
-		ORDER by feedbackdate DESC
-		LIMIT $left_limit, " . $system->SETTINGS['perpage'];
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
+// get this page of data
+	$offset = ($page_on - 1) * $system->SETTINGS['perpage'];
+	$offset = ($offset < 0) ? 0 : $offset;
+	$query = "SELECT f.*, a.title FROM " . $DBPrefix . "feedbacks f
+				LEFT OUTER JOIN " . $DBPrefix . "auctions a
+				ON a.id = f.auction_id
+				WHERE rated_user_id = " . $user->user_data['id'] . "
+				ORDER by feedbackdate DESC
+				LIMIT " . intval($offset) . "," . $system->SETTINGS['perpage'];
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
 
 $i = 0;
 $feed_disp = array();
@@ -100,33 +83,26 @@ while ($arrfeed = mysql_fetch_assoc($res))
 	$i++;
 }
 
-$firstpage = (($page - 5) <= 0) ? 1 : ($page - 5);
-$lastpage = (($page + 5) > $pages) ? $pages : ($page + 5);
-$backpage = (($page - 1) <= 0) ? 1 : ($page - 1);
-$nextpage = (($page + 1) > $pages) ? $pages : ($page + 1);
-$echofeed = ($page == 1) ? '' : '<a href="yourfeedback.php">&laquo;</a> <a href="yourfeedback.php?pg=' . $backpage . '"><</a> ';
-for ($ind2 = $firstpage; $ind2 <= $lastpage; $ind2++)
-{
-	if ($page != $ind2)
-	{
-		$echofeed .= '<a href="yourfeedback.php?pg=' . $ind2 . '">' . $ind2 . '</a>';
-	}
-	else
-	{
-		$echofeed .= $ind2;
-	}
-	if ($ind2 != $lastpage)
-	{
-		$echofeed .= ' | ';
+include $include_path . 'membertypes.inc.php';
+foreach ($membertypes as $idm => $memtypearr){
+	$memtypesarr[$memtypearr['feedbacks']] = $memtypearr;
+}
+ksort($memtypesarr, SORT_NUMERIC);
+
+$i = 0;
+foreach ($memtypesarr as $k => $l){
+	if ($k >= $user->user_data['rate_sum'] || $i++ == (count($memtypesarr) - 1)){
+		$TPL_rate_ratio_value = '<img src="' . $system->SETTINGS['siteurl'] . 'images/icons/' . $l['icon'] . '" alt="' . $l['icon'] . '" class="fbstar">';
+		break;
 	}
 }
-$echofeed .= ($thispage == $pages || $pages == 0) ? '' : ' <a href="yourfeedback.php?pg=' . $nextpage . '">></a> <a href="yourfeedback.php?pg=' . $pages . '">&raquo;</a>';
+
 
 $template->assign_vars(array(
 		'USERNICK' => $user->user_data['nick'],
 		'USERFB' => $user->user_data['rate_sum'],
 		'USERFBIMG' => (isset($TPL_rate_ratio_value)) ? $TPL_rate_ratio_value : '',
-		'PAGENATION' => $echofeed,
+		'PAGINATION' => pagination($page_on,$system->SETTINGS['perpage'],$total,'yourfeedback.php?p=%1$s'),
 		'BGCOLOUR' => (!(($i + 1) % 2)) ? '' : 'class="alt-row"'
 		));
 

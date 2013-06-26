@@ -14,42 +14,32 @@
 
 include 'common.php';
 
-// If user is not logged in redirect to login page
-if (!$user->is_logged_in())
-{
-	$_SESSION['REDIRECT_AFTER_LOGIN'] = 'invoices.php';
-	header('location: user_login.php');
-	exit;
-}
+// if user is not logged in redirect to login page
+	if (!$user->is_logged_in()){
+		$_SESSION['REDIRECT_AFTER_LOGIN'] = 'invoices.php';
+		header('location: user_login.php');
+		exit;
+	}
 
-if (!isset($_GET['PAGE']) || $_GET['PAGE'] == 1)
-{
-	$OFFSET = 0;
-	$PAGE = 1;
-}
-else
-{
-	$PAGE = intval($_GET['PAGE']);
-	$OFFSET = ($PAGE - 1) * $system->SETTINGS['perpage'];
-}
+// whats the page number
+	$page_on = (!isset($_GET['p']) || $_GET['p'] == 0) ? 1:$_GET['p'];
 
 // count the pages
-$query = "SELECT COUNT(useracc_id) As COUNT  FROM " . $DBPrefix . "useraccounts
-    WHERE user_id = " . $user->user_data['id'];
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
-$TOTALINVOICES = mysql_result($res, 0, 'COUNT');
-$PAGES = ($TOTALINVOICES == 0) ? 1 : ceil($TOTALINVOICES / $system->SETTINGS['perpage']);
+	$query = "SELECT COUNT(user_id) FROM " . $DBPrefix . "useraccounts WHERE user_id = " . $user->user_data['id'];
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
+	$total = mysql_result($res, 0);
 
 // get this page of data
-$query = "SELECT * FROM " . $DBPrefix . "useraccounts
-    WHERE user_id = " . $user->user_data['id'] . "
-	LIMIT " . intval($OFFSET) . "," . $system->SETTINGS['perpage'];
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
+	$offset = ($page_on - 1) * $system->SETTINGS['perpage'];
+	$offset = ($offset < 0) ? 0 : $offset;
+	$query = "SELECT * FROM " . $DBPrefix . "useraccounts
+				WHERE user_id = " . $user->user_data['id'] . "
+				LIMIT " . intval($offset) . "," . $system->SETTINGS['perpage'];
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
 
-while ($row = mysql_fetch_assoc($res))
-{
+while ($row = mysql_fetch_assoc($res)){
 	if ($row['total'] > 0)
 	{
 		$DATE = $row['date'] + $system->tdiff;
@@ -143,31 +133,11 @@ while ($row = mysql_fetch_assoc($res))
 	}
 }
 
-// get pagenation
-$PREV = intval($PAGE - 1);
-$NEXT = intval($PAGE + 1);
-if ($PAGES > 1)
-{
-	$LOW = $PAGE - 5;
-	if ($LOW <= 0) $LOW = 1;
-	$COUNTER = $LOW;
-	while ($COUNTER <= $PAGES && $COUNTER < ($PAGE + 6))
-	{
-		$template->assign_block_vars('pages', array(
-				'PAGE' => ($PAGE == $COUNTER) ? '<b>' . $COUNTER . '</b>' : '<a href="' . $system->SETTINGS['siteurl'] . 'invoices.php?PAGE=' . $COUNTER . '"><u>' . $COUNTER . '</u></a>'
-				));
-		$COUNTER++;
-	}
-}
 
 $_SESSION['INVOICE_RETURN'] = 'invoices.php';
 $template->assign_vars(array(
 		'CURRENCY' => $system->SETTINGS['currency'],
-
-		'PREV' => ($PAGES > 1 && $PAGE > 1) ? '<a href="' . $system->SETTINGS['siteurl'] . 'invoices.php?PAGE=' . $PREV . '"><u>' . $MSG['5119'] . '</u></a>&nbsp;&nbsp;' : '',
-		'NEXT' => ($PAGE < $PAGES) ? '<a href="' . $system->SETTINGS['siteurl'] . 'invoices.php?PAGE=' . $NEXT . '"><u>' . $MSG['5120'] . '</u></a>' : '',
-		'PAGE' => $PAGE,
-		'PAGES' => $PAGES
+		'PAGINATION' => pagination($page_on,$system->SETTINGS['perpage'],$total,'invoices.php?p=%1$s'),
 		));
 
 include 'header.php';

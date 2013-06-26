@@ -14,38 +14,32 @@
 
 include 'common.php';
 
-// If user is not logged in redirect to login page
-if (!$user->is_logged_in())
-{
-	$_SESSION['REDIRECT_AFTER_LOGIN'] = 'outstanding.php';
-	header('location: user_login.php');
-	exit;
-}
+// if user is not logged in redirect to login page
+	if (!$user->is_logged_in()){
+		$_SESSION['REDIRECT_AFTER_LOGIN'] = 'outstanding.php';
+		header('location: user_login.php');
+		exit;
+	}
 
-if (!isset($_GET['PAGE']) || $_GET['PAGE'] == 1)
-{
-	$OFFSET = 0;
-	$PAGE = 1;
-}
-else
-{
-	$PAGE = intval($_GET['PAGE']);
-	$OFFSET = ($PAGE - 1) * $system->SETTINGS['perpage'];
-}
+// whats the page number
+	$page_on = (!isset($_GET['p']) || $_GET['p'] == 0) ? 1:$_GET['p'];
 
-$query = "SELECT COUNT(id) As COUNT FROM " . $DBPrefix . "winners
-		WHERE paid = 0 AND winner = " . $user->user_data['id'];
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
-$TOTALAUCTIONS = mysql_result($res, 0, 'COUNT');
-$PAGES = ($TOTALAUCTIONS == 0) ? 1 : ceil($TOTALAUCTIONS / $system->SETTINGS['perpage']);
+// count the pages
+	$query = "SELECT COUNT(*) FROM " . $DBPrefix . "winners WHERE paid = 0 AND winner = " . $user->user_data['id'];
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
+	$total = mysql_result($res, 0);
 
-$query = "SELECT w.auction As id, w.id As winid, a.title, a.shipping_cost, w.bid, w.qty, a.shipping_cost_additional FROM " . $DBPrefix . "winners w
-		LEFT JOIN " . $DBPrefix . "auctions a ON (a.id = w.auction)
-		WHERE w.paid = 0 AND w.winner = " . $user->user_data['id'] . "
-		LIMIT " . intval($OFFSET) . "," . $system->SETTINGS['perpage'];
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
+// get this page of data
+	$offset = ($page_on - 1) * $system->SETTINGS['perpage'];
+	$offset = ($offset < 0) ? 0 : $offset;
+	$query = "SELECT w.auction As id, w.id As winid, a.title, a.shipping_cost, w.bid, w.qty, a.shipping_cost_additional
+				FROM " . $DBPrefix . "winners w
+				LEFT JOIN " . $DBPrefix . "auctions a ON (a.id = w.auction)
+				WHERE w.paid = 0 AND w.winner = " . $user->user_data['id'] . "
+				LIMIT " . intval($offset) . "," . $system->SETTINGS['perpage'];
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
 
 while ($row = mysql_fetch_assoc($res))
 {
@@ -66,22 +60,6 @@ while ($row = mysql_fetch_assoc($res))
 			));
 }
 
-// get pagenation
-$PREV = intval($PAGE - 1);
-$NEXT = intval($PAGE + 1);
-if ($PAGES > 1)
-{
-	$LOW = $PAGE - 5;
-	if ($LOW <= 0) $LOW = 1;
-	$COUNTER = $LOW;
-	while ($COUNTER <= $PAGES && $COUNTER < ($PAGE + 6))
-	{
-		$template->assign_block_vars('pages', array(
-				'PAGE' => ($PAGE == $COUNTER) ? '<b>' . $COUNTER . '</b>' : '<a href="' . $system->SETTINGS['siteurl'] . 'outstanding.php?PAGE=' . $COUNTER . '"><u>' . $COUNTER . '</u></a>'
-				));
-		$COUNTER++;
-	}
-}
 
 $query = "SELECT balance FROM " . $DBPrefix . "users WHERE id = " . $user->user_data['id'];
 $res = mysql_query($query);
@@ -93,11 +71,7 @@ $template->assign_vars(array(
 		'USER_BALANCE' => $system->print_money($user_balance),
 		'PAY_BALANCE' => $system->print_money_nosymbol(($user_balance < 0) ? 0 - $user_balance : 0),
 		'CURRENCY' => $system->SETTINGS['currency'],
-
-		'PREV' => ($PAGES > 1 && $PAGE > 1) ? '<a href="' . $system->SETTINGS['siteurl'] . 'outstanding.php?PAGE=' . $PREV . '"><u>' . $MSG['5119'] . '</u></a>&nbsp;&nbsp;' : '',
-		'NEXT' => ($PAGE < $PAGES) ? '<a href="' . $system->SETTINGS['siteurl'] . 'outstanding.php?PAGE=' . $NEXT . '"><u>' . $MSG['5120'] . '</u></a>' : '',
-		'PAGE' => $PAGE,
-		'PAGES' => $PAGES
+		'PAGINATION' => pagination($page_on,$system->SETTINGS['perpage'],$total,'outstanding.php?p=%1$s')
 		));
 
 include 'header.php';

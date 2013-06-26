@@ -297,3 +297,29 @@ a:hover {
 .grayfont {
 	color: #dcdcdc;
 }
+
+/*************************
+	pagination
+*************************/
+.pagination {clear: both;margin: 0px 0px;}
+.pagination span.pagecount,
+.pagination span.disabled,
+.pagination span.current,
+.pagination a {
+	background: #FFF;
+	color: #333333;
+	display: inline-block;
+	font-size: 11px;
+	font-weight: bold;
+	height: 25px;
+	line-height: 24px;
+	margin: 0 2px;
+	min-width: 15px;
+	padding: 0 5px;
+	text-align: center;
+	text-decoration: none;
+}
+.pagination a {color: #666;}
+.pagination a:hover, div.pagination a:active, .pagination span.current {background-color:#FFA200;color: #fff;}
+.pagination span.disabled {color:#868686;}
+.pagination span.pagecount{background: #9EC9EC;color: #333;}

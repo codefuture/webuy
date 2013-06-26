@@ -15,12 +15,14 @@
 include 'common.php';
 
 // If user is not logged in redirect to login page
-if (!$user->is_logged_in())
-{
-	$_SESSION['REDIRECT_AFTER_LOGIN'] = 'yourauctions_sold.php';
-	header('location: user_login.php');
-	exit;
-}
+	if (!$user->is_logged_in()){
+		$_SESSION['REDIRECT_AFTER_LOGIN'] = 'yourauctions_sold.php';
+		header('location: user_login.php');
+		exit;
+	}
+
+// whats the page number
+	$page_on = (!isset($_GET['p']) || $_GET['p'] == 0) ? 1:$_GET['p'];
 
 $NOW = time();
 $NOWB = gmdate('Ymd');
@@ -106,25 +108,12 @@ if (isset($_POST['action']) && $_POST['action'] == 'update')
 }
 
 // Retrieve closed auction data from the database
-$query = "SELECT a.*  FROM " . $DBPrefix . "auctions a, " . $DBPrefix . "winners w
-		WHERE a.user = " . $user->user_data['id'] . " AND a.closed = 1 AND a.suspended = 0 AND a.id = w.auction GROUP BY w.auction";
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
+	$query = "SELECT a.*  FROM " . $DBPrefix . "auctions a, " . $DBPrefix . "winners w
+			WHERE a.user = " . $user->user_data['id'] . " AND a.closed = 1 AND a.suspended = 0 AND a.id = w.auction GROUP BY w.auction";
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
+	$total = mysql_num_rows($res);
 
-$TOTALAUCTIONS = mysql_num_rows($res);
-
-if (!isset($_GET['PAGE']) || $_GET['PAGE'] < 0 || empty($_GET['PAGE']))
-{
-	$OFFSET = 0;
-	$PAGE = 1;
-}
-else
-{
-	$PAGE = intval($_GET['PAGE']);
-	$OFFSET = ($PAGE - 1) * $system->SETTINGS['perpage'];
-}
-
-$PAGES = ($TOTALAUCTIONS == 0) ? 1 : ceil($TOTALAUCTIONS / $system->SETTINGS['perpage']);
 
 // Handle columns sorting variables
 if (!isset($_SESSION['solda_ord']) && empty($_GET['solda_ord']))
@@ -160,15 +149,18 @@ else
 	$_SESSION['solda_type_img'] = '<img src="images/arrow_down.gif" align="center" hspace="2" border="0" alt="down"/>';
 }
 
-$query = "SELECT a.* FROM " . $DBPrefix . "auctions a, " . $DBPrefix . "winners w
-		WHERE a.user = " . $user->user_data['id'] . "
-		AND a.closed = 1
-		AND a.suspended = 0
-		AND a.id = w.auction
-		GROUP BY w.auction
-		ORDER BY " . $_SESSION['solda_ord'] . " " . $_SESSION['solda_type'] . " LIMIT " . $OFFSET . "," . $system->SETTINGS['perpage'];
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
+// get this page of data
+	$offset = ($page_on - 1) * $system->SETTINGS['perpage'];
+	$offset = ($offset < 0) ? 0 : $offset;
+	$query = "SELECT a.* FROM " . $DBPrefix . "auctions a, " . $DBPrefix . "winners w
+			WHERE a.user = " . $user->user_data['id'] . "
+			AND a.closed = 1
+			AND a.suspended = 0
+			AND a.id = w.auction
+			GROUP BY w.auction
+			ORDER BY " . $_SESSION['solda_ord'] . " " . $_SESSION['solda_type'] . " LIMIT $offset," . $system->SETTINGS['perpage'];
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
 
 $i = 0;
 while ($item = mysql_fetch_assoc($res))
@@ -188,32 +180,11 @@ while ($item = mysql_fetch_assoc($res))
 	$i++;
 }
 
-// get pagenation
-$PREV = intval($PAGE - 1);
-$NEXT = intval($PAGE + 1);
-if ($PAGES > 1)
-{
-	$LOW = $PAGE - 5;
-	if ($LOW <= 0) $LOW = 1;
-	$COUNTER = $LOW;
-	while ($COUNTER <= $PAGES && $COUNTER < ($PAGE + 6))
-	{
-		$template->assign_block_vars('pages', array(
-				'PAGE' => ($PAGE == $COUNTER) ? '<b>' . $COUNTER . '</b>' : '<a href="' . $system->SETTINGS['siteurl'] . 'yourauctions_sold.php?PAGE=' . $COUNTER . '&id=' . $id . '"><u>' . $COUNTER . '</u></a>'
-				));
-		$COUNTER++;
-	}
-}
-
 $template->assign_vars(array(
 		'ORDERCOL' => $_SESSION['solda_ord'],
 		'ORDERNEXT' => $_SESSION['solda_nexttype'],
 		'ORDERTYPEIMG' => $_SESSION['solda_type_img'],
-
-		'PREV' => ($PAGES > 1 && $PAGE > 1) ? '<a href="' . $system->SETTINGS['siteurl'] . 'yourauctions_sold.php?PAGE=' . $PREV . '&id=' . $id . '"><u>' . $MSG['5119'] . '</u></a>&nbsp;&nbsp;' : '',
-		'NEXT' => ($PAGE < $PAGES) ? '<a href="' . $system->SETTINGS['siteurl'] . 'yourauctions_sold.php?PAGE=' . $NEXT . '&id=' . $id . '"><u>' . $MSG['5120'] . '</u></a>' : '',
-		'PAGE' => $PAGE,
-		'PAGES' => $PAGES
+		'PAGINATION' => pagination($page_on,$system->SETTINGS['perpage'],$total,'yourauctions_sold.php?p=%1$s'),
 		));
 
 include 'header.php';
