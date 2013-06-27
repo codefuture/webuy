@@ -14,10 +14,10 @@
 
 if (!defined('InWeBid')) exit();
 
-function browseItems($result, $feat_res, $total, $current_page, $extravar = '')
+function browseItems($result, $feat_res)
 {
 	global $system, $uploaded_path, $DBPrefix, $MSG, $ERR_114;
-	global $template, $PAGES, $PAGE;
+	global $template;
 
 	$feat_items = false;
 	if ($feat_res != false)
@@ -76,32 +76,9 @@ function browseItems($result, $feat_res, $total, $current_page, $extravar = '')
 		));
 	}
 
-	$extravar = (empty($extravar)) ? '' : '&' . $extravar;
-	$PREV = intval($PAGE - 1);
-	$NEXT = intval($PAGE + 1);
-	if ($PAGES > 1)
-	{
-		$LOW = $PAGE - 5;
-		if ($LOW <= 0) $LOW = 1;
-		$COUNTER = $LOW;
-		while ($COUNTER <= $PAGES && $COUNTER < ($PAGE+6))
-		{
-			$template->assign_block_vars('pages', array(
-				'PAGE' => ($PAGE == $COUNTER) ? '<b>' . $COUNTER . '</b>' : '<a href="' . $system->SETTINGS['siteurl'] . $current_page . '?PAGE=' . $COUNTER . $extravar . '"><u>' . $COUNTER . '</u></a>'
-			));
-			$COUNTER++;
-		}
-	}
-
 	$template->assign_vars(array(
 		'B_FEATURED_ITEMS' => $feat_items,
 		'B_SUBTITLE' => ($system->SETTINGS['subtitle'] == 'y'),
-
-		'NUM_AUCTIONS' => ($total == 0) ? $ERR_114 : $total,
-		'PREV' => ($PAGES > 1 && $PAGE > 1) ? '<a href="' . $system->SETTINGS['siteurl'] . $current_page . '?PAGE=' . $PREV . $extravar . '"><u>' . $MSG['5119'] . '</u></a>&nbsp;&nbsp;' : '',
-		'NEXT' => ($PAGE < $PAGES) ? '<a href="' . $system->SETTINGS['siteurl'] . $current_page . '?PAGE=' . $NEXT . $extravar . '"><u>' . $MSG['5120'] . '</u></a>' : '',
-		'PAGE' => $PAGE,
-		'PAGES' => $PAGES
 	));
 }
 

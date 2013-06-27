@@ -17,10 +17,13 @@ include $include_path . 'dates.inc.php';
 include $main_path . 'language/' . $language . '/categories.inc.php';
 $catscontrol = new MPTTcategories();
 
+// whats the page number
+	$page_on = (!isset($_GET['p']) || $_GET['p'] == 0) ? 1:$_GET['p'];
+
 // Get parameters from the URL
-$id = (isset($_GET['id'])) ? intval($_GET['id']) : 0;
-$_SESSION['browse_id'] = $id;
-$all_items = true;
+	$id = (isset($_GET['id'])) ? intval($_GET['id']) : 0;
+	$_SESSION['browse_id'] = $id;
+	$all_items = true;
 
 if ($id != 0)
 {
@@ -167,30 +170,19 @@ else
 	}
 	$res = mysql_query($query);
 	$system->check_mysql($res, $query, __LINE__, __FILE__);
-	$TOTALAUCTIONS = mysql_result($res, 0);
+	$total = mysql_result($res, 0);
 
-	// Handle pagination
-	if (!isset($_GET['PAGE']) || $_GET['PAGE'] == 1)
-	{
-		$OFFSET = 0;
-		$PAGE = 1;
-	}
-	else
-	{
-		$PAGE = $_REQUEST['PAGE'];
-		$OFFSET = ($PAGE - 1) * $system->SETTINGS['perpage'];
-	}
-	$PAGES = ceil($TOTALAUCTIONS / $system->SETTINGS['perpage']);
-
+// get this page of data
+	$offset = ($page_on - 1) * $system->SETTINGS['perpage'];
+	$offset = ($offset < 0) ? 0 : $offset;
 	$query = "SELECT * FROM " . $DBPrefix . "auctions
 			WHERE " . $insql . " starts <= " . $NOW . "
 			AND closed = 0
 			AND suspended = 0";
-	if (!empty($_POST['catkeyword']))
-	{
+	if (!empty($_POST['catkeyword'])){
 		$query .= " AND title LIKE '%" . $system->cleanvars($_POST['catkeyword']) . "%'";
 	}
-	$query .= " ORDER BY ends ASC LIMIT " . intval($OFFSET) . "," . $system->SETTINGS['perpage'];
+	$query .= " ORDER BY ends ASC LIMIT $offset," . $system->SETTINGS['perpage'];
 	$res = mysql_query($query);
 	$system->check_mysql($res, $query, __LINE__, __FILE__);
 
@@ -204,18 +196,19 @@ else
 	{
 		$query .= " AND title LIKE '%" . $system->cleanvars($_POST['catkeyword']) . "%'";
 	}
-	$query .= " ORDER BY ends ASC LIMIT " . intval(($PAGE - 1) * 5) . ", 5";
+	$query .= " ORDER BY ends ASC LIMIT " . intval(($page_on - 1) * 5) . ", 5";
 	$feat_res = mysql_query($query);
 	$system->check_mysql($feat_res, $query, __LINE__, __FILE__);
 
 	include $include_path . 'browseitems.inc.php';
-	browseItems($res, $feat_res, $TOTALAUCTIONS, 'browse.php', 'id=' . $id);
+	browseItems($res, $feat_res);
 
 	$template->assign_vars(array(
 			'ID' => $id,
 			'TOP_HTML' => $TPL_main_value,
 			'CAT_STRING' => $TPL_categories_string,
-			'NUM_AUCTIONS' => $TOTALAUCTIONS
+			'NUM_AUCTIONS' => $total,
+			'PAGINATION' => pagination($page_on,$system->SETTINGS['perpage'],$total,'browse.php?p=%1$s&id=' . $id)
 			));
 }
 
