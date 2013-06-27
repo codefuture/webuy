@@ -22,7 +22,7 @@ function browseItems($result, $feat_res, $total, $current_page, $extravar = '')
 	$feat_items = false;
 	if ($feat_res != false)
 	{
-		$k = 0;
+		$i = 0;
 		while ($row = mysql_fetch_assoc($feat_res))
 		{
 			// get the data we need
@@ -30,11 +30,11 @@ function browseItems($result, $feat_res, $total, $current_page, $extravar = '')
 
 			// time left till the end of this auction
 			$difference = $row['ends'] - time();
-			$bgcolour = ($k % 2) ? 'bgcolor="#FFFEEE"' : '';
 
 			$template->assign_block_vars('featured_items', array(
+				'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
+				'HIGHLIGHTED' => $row['highlighted'] == 'y' ? 'highlighted' : '',
 				'ID' => $row['id'],
-				'ROWCOLOUR' => ($row['highlighted'] == 'y') ? 'bgcolor="#fea100"' : $bgcolour,
 				'IMAGE' => $row['pict_url'],
 				'TITLE' => $row['title'],
 				'SUBTITLE' => $row['subtitle'],
@@ -46,12 +46,11 @@ function browseItems($result, $feat_res, $total, $current_page, $extravar = '')
 
 				'B_BOLD' => ($row['bold'] == 'y')
 			));
-			$k++;
 			$feat_items = true;
 		}
 	}
 
-	$k = 0;
+	$i = 0;
 	while ($row = mysql_fetch_assoc($result))
 	{
 		// get the data we need
@@ -59,11 +58,11 @@ function browseItems($result, $feat_res, $total, $current_page, $extravar = '')
 
 		// time left till the end of this auction 
 		$difference = $row['ends'] - time();
-		$bgcolour = ($k % 2) ? 'bgcolor="#FFFEEE"' : '';
 
 		$template->assign_block_vars('items', array(
+			'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
+			'HIGHLIGHTED' => $row['highlighted'] == 'y' ? 'highlighted' : '',
 			'ID' => $row['id'],
-			'ROWCOLOUR' => ($row['highlighted'] == 'y') ? 'bgcolor="#fea100"' : $bgcolour,
 			'IMAGE' => $row['pict_url'],
 			'TITLE' => $row['title'],
 			'SUBTITLE' => $row['subtitle'],
@@ -75,7 +74,6 @@ function browseItems($result, $feat_res, $total, $current_page, $extravar = '')
 
 			'B_BOLD' => ($row['bold'] == 'y')
 		));
-		$k++;
 	}
 
 	$extravar = (empty($extravar)) ? '' : '&' . $extravar;

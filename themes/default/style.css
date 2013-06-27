@@ -62,6 +62,7 @@ input {
 
 tr.odd{background:#f5f5f5}
 tr.even{background:#fff}
+tr.highlighted{background:#fea100}
 
 td {
 	padding: 3px;

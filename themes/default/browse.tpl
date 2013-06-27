@@ -1,7 +1,7 @@
 <!-- IF B_FEATURED_ITEMS -->
 	<table width="99%" border="0" cellspacing="1" cellpadding="4">
     <!-- BEGIN featured_items -->
-		<tr align="center">
+		<tr align="center" class="{featured_items.ODD_EVEN} {featured_items.HIGHLIGHTED}">
 			<td align="center" width="15%">
 				<a href="{SITEURL}item.php?id={featured_items.ID}"><img src="{featured_items.IMAGE}" border="0"></a>
 			</td>
@@ -29,7 +29,7 @@
 
 	<table width="99%" border="0" cellspacing="1" cellpadding="4">
 <!-- BEGIN items -->
-		<tr align="center" {items.ROWCOLOUR}>
+		<tr align="center" class="{items.ODD_EVEN} {items.HIGHLIGHTED}">
 			<td align="center" width="15%">
 				<a href="{SITEURL}item.php?id={items.ID}"><img src="{items.IMAGE}" border="0"></a>
 			</td>
