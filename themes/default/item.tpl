@@ -200,19 +200,17 @@ $(document).ready(function() {
 			  <td width="3%" class='table2'>&nbsp;</td>
 			  <td class="table2" style="padding:10px;">
 				<a href='{SITEURL}profile.php?user_id={SELLER_ID}&auction_id={ID}'><b>{SELLER_NICK}</b></a>
-				(<a href='{SITEURL}feedback.php?id={SELLER_ID}&faction=show'>{SELLER_TOTALFB}</A>)
-				{SELLER_FBICON}
+				(<a href='{SITEURL}feedback.php?id={SELLER_ID}&faction=show'>{SELLER_FB_SUM}</A>)
+				{SELLER_FB_ICON}
 			  </td>
 			</tr>
 			<tr>
 			  <td width="3%">&nbsp;</td>
 			  <td width="97%">
-				<li>{L_5509}{SELLER_NUMFB}{L__0151}
-				<li><b>{L_5506}{SELLER_FBPOS}</b>
-<!-- IF SELLER_FBNEG ne 0 -->
-				<li>{SELLER_FBNEG}</li>
-<!-- ENDIF -->
-				<li>{L_5508}{SELLER_REG}</li>
+				<ul>
+					<li><b>{L_5506}{SELLER_FB_POS}</b></li>
+					<li>{L_5508}{SELLER_REG}</li>
+				</ul>
 			  </td>
 			</tr>
 			<tr>

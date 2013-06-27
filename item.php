@@ -35,19 +35,21 @@ $_SESSION['CURRENT_ITEM'] = $id;
 $_SESSION['REDIRECT_AFTER_LOGIN'] = $system->SETTINGS['siteurl'] . 'item.php?id=' . $id;
 
 // get auction all needed data
-$query = "SELECT a.*, ac.counter, u.nick, u.reg_date, u.country, u.zip FROM " . $DBPrefix . "auctions a
-		LEFT JOIN " . $DBPrefix . "users u ON (u.id = a.user)
-		LEFT JOIN " . $DBPrefix . "auccounter ac ON (ac.auction_id = a.id)
-		WHERE a.id = " . $id . " LIMIT 1";
-$result = mysql_query($query);
-$system->check_mysql($result, $query, __LINE__, __FILE__);
-if (mysql_num_rows($result) == 0)
-{
-	$_SESSION['msg_title'] = $ERR_622;
-	$_SESSION['msg_body'] = $ERR_623;
-	header('location: message.php');
-	exit;
-}
+	$query = "SELECT a.*, ac.counter, u.nick, u.reg_date, u.country,u.rate_sum,u.rate_num,r.rate_pos, u.zip FROM " . $DBPrefix . "auctions a
+				LEFT JOIN " . $DBPrefix . "users u ON (u.id = a.user)
+				LEFT JOIN " . $DBPrefix . "auccounter ac ON (ac.auction_id = a.id)
+				LEFT JOIN (SELECT rated_user_id,count(rate) rate_pos FROM " . $DBPrefix . "feedbacks WHERE rate=1 GROUP BY rated_user_id) r ON r.rated_user_id = a.user
+				WHERE a.id = " . $id . " LIMIT 1";
+
+	$result = mysql_query($query);
+	$system->check_mysql($result, $query, __LINE__, __FILE__);
+	if (mysql_num_rows($result) == 0){
+		$_SESSION['msg_title'] = $ERR_622;
+		$_SESSION['msg_body'] = $ERR_623;
+		header('location: message.php');
+		exit;
+	}
+
 $auction_data = mysql_fetch_assoc($result);
 $category = $auction_data['category'];
 $auction_type = $auction_data['auction_type'];
@@ -59,7 +61,7 @@ $high_bid = $auction_data['current_bid'];
 $customincrement = $auction_data['increment'];
 $seller_reg = FormatDate($auction_data['reg_date'], '/', false);
 
-// sort out counter
+// sort out view counter
 if (empty($auction_data['counter']))
 {
 	$query = "INSERT INTO " . $DBPrefix . "auccounter VALUES (" . $id . ", 1)";
@@ -381,34 +383,11 @@ else
 	$next_bid = '--';
 }
 
-// get seller feebacks
-$query = "SELECT rate FROM " . $DBPrefix . "feedbacks WHERE rated_user_id = " . $user_id;
-$result = mysql_query($query);
-$system->check_mysql($result, $query, __LINE__, __FILE__);
-$num_feedbacks = mysql_num_rows($result);
-// count numbers
-$fb_pos = $fb_neg = 0;
-while ($fb_arr = mysql_fetch_assoc($result))
-{
-	if ($fb_arr['rate'] == 1)
-	{
-		$fb_pos++;
-	}
-	elseif ($fb_arr['rate'] == - 1)
-	{
-		$fb_neg++;
-	}
-}
-
-$total_rate = $fb_pos - $fb_neg;
-
-if ($total_rate > 0)
-{
+// get user star image rating
+if ($auction_data['rate_sum'] > 0){
 	$i = 0;
-	foreach ($memtypesarr as $k => $l)
-	{
-		if ($k >= $total_rate || $i++ == (count($memtypesarr) - 1))
-		{
+	foreach ($memtypesarr as $k => $l){
+		if ($k >= $auction_data['rate_sum'] || $i++ == (count($memtypesarr) - 1)){
 			$seller_rate_icon = $l['icon'];
 			break;
 		}
@@ -552,11 +531,11 @@ $template->assign_vars(array(
 		'SELLER_REG' => $seller_reg,
 		'SELLER_ID' => $auction_data['user'],
 		'SELLER_NICK' => $auction_data['nick'],
-		'SELLER_TOTALFB' => $total_rate,
-		'SELLER_FBICON' => (!empty($seller_rate_icon) && $seller_rate_icon != 'transparent.gif') ? '<img src="' . $system->SETTINGS['siteurl'] . 'images/icons/' . $seller_rate_icon . '" alt="' . $seller_rate_icon . '" class="fbstar">' : '',
-		'SELLER_NUMFB' => $num_feedbacks,
-		'SELLER_FBPOS' => ($num_feedbacks > 0) ? '(' . ceil($fb_pos * 100 / $num_feedbacks) . '%)' : $MSG['000'],
-		'SELLER_FBNEG' => ($fb_neg > 0) ? $MSG['5507'] . ' (' . ceil($fb_neg * 100 / $total_rate) . '%)' : '0',
+
+		'SELLER_FB_TOTAL' => $auction_data['rate_num'],
+		'SELLER_FB_SUM' => $auction_data['rate_sum'],
+		'SELLER_FB_ICON' => (!empty($seller_rate_icon) && $seller_rate_icon != 'transparent.gif') ? '<img src="' . $system->SETTINGS['siteurl'] . 'images/icons/' . $seller_rate_icon . '" alt="' . $seller_rate_icon . '" class="fbstar">' : '',
+		'SELLER_FB_POS' => ($auction_data['rate_pos'] > 0) ? '(' . ceil($auction_data['rate_pos'] * 100 / ($auction_data['rate_pos'] + ($auction_data['rate_pos'] - $auction_data['rate_sum']))) . '%) '.$test : $MSG['000'],
 
 		'WATCH_VAR' => $watch_var,
 		'WATCH_STRING' => $watch_string,
