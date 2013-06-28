@@ -318,7 +318,7 @@ function get_fee($minimum_bid, $just_fee = true)
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
 		// build an array full of everything the user has been charged for the auction do far
 		$past_fees = array();
-		while($row = mysql_fetch_assoc($res, 0))
+		while($row = mysql_fetch_assoc($res))
 		{
 			foreach ($row as $k => $v)
 			{
