@@ -37,6 +37,9 @@ if (isset($_POST['action']) && $_POST['action'] == 'delopenauctions')
 		{
 			$v = intval($v);
 			// Pictures Gallery
+			if (!is_dir($upload_path . $v)) {
+				continue;
+			}
 			if ($dir = @opendir($upload_path . $v))
 			{
 				while ($file = readdir($dir))
