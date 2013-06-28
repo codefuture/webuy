@@ -24,6 +24,7 @@ $CHARSET = "ISO-8859-1";
 // - ltr (default) - means left-to-right document (almost any language)
 // - rtl - means right-to-left document (i.e. arabic, hebrew, ect).
 $DOCDIR = "ltr";
+$LANGUAGE = "en";
 // Error messages and user interface messages are below. Translate them taking care of leaving
 // The PHP and HTML tags unchanged.
 // Error messages =============================================================

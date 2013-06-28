@@ -38,7 +38,7 @@ include 'common.php';
 				LIMIT " . intval($offset) . "," . $system->SETTINGS['perpage'];
 	$res = mysql_query($query);
 	$system->check_mysql($res, $query, __LINE__, __FILE__);
-
+$i=0;
 while ($row = mysql_fetch_assoc($res)){
 	if ($row['total'] > 0)
 	{
@@ -122,6 +122,7 @@ while ($row = mysql_fetch_assoc($res)){
 		}
 
 		$template->assign_block_vars('topay', array(
+				'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
 				'INVOICE' => $row['useracc_id'],
 				'AUC_ID' => $row['auc_id'],
 				'DATE' => ArrangeDateNoCorrection($DATE),

@@ -125,7 +125,6 @@ while ($item = mysql_fetch_array($res))
 
 			'B_HASNOBIDS' => ($item['current_bid'] == 0)
 			));
-	$i++;
 }
 
 

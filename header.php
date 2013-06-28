@@ -37,6 +37,7 @@ $incurl = (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != 'on') ? $system->SE
 
 $template->assign_vars(array(
 		'DOCDIR' => $DOCDIR, // Set document direction (set in includes/messages.XX.inc.php) ltr/rtl
+		'LANGUAGE' => $LANGUAGE,
 		'THEME' => $system->SETTINGS['theme'],
 		'PAGE_TITLE' => $system->SETTINGS['sitename'] . $page_title,
 		'CHARSET' => $CHARSET,

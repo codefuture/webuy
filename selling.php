@@ -60,7 +60,7 @@ while ($row = mysql_fetch_array($res))
 	{
 		$fblink = ($winner['feedback_sel'] == 0) ? '(<a href="' . $sslurl . 'feedback.php?auction_id=' . $row['auction'] . '&wid=' . $winner['winner'] . '&sid=' . $winner['seller'] . '&ws=s">' . $MSG['207'] . '</a>)' : '';
 		$template->assign_block_vars('a.w', array(
-				'BGCOLOUR' => (!($i % 2)) ? '' : 'class="alt-row"',
+				'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
 				'ID' => $winner['id'],
 				'BID' => $winner['bid'],
 				'BIDF' => $system->print_money($winner['bid']),
@@ -71,7 +71,6 @@ while ($row = mysql_fetch_array($res))
 
 				'B_PAID' => ($winner['paid'] == 1)
 				));
-		$i++;
 	}
 }
 
