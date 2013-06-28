@@ -33,7 +33,7 @@ include 'common.php';
 // get this page of data
 	$offset = ($page_on - 1) * $system->SETTINGS['perpage'];
 	$offset = ($offset < 0) ? 0 : $offset;
-	$query = "SELECT w.auction As id, w.id As winid, a.title, a.shipping_cost, w.bid, w.qty, a.shipping_cost_additional
+	$query = "SELECT w.auction As id, w.id As winid, a.title, a.shipping, a.shipping_cost, w.bid, w.qty, a.shipping_cost_additional
 				FROM " . $DBPrefix . "winners w
 				LEFT JOIN " . $DBPrefix . "auctions a ON (a.id = w.auction)
 				WHERE w.paid = 0 AND w.winner = " . $user->user_data['id'] . "
@@ -48,13 +48,13 @@ while ($row = mysql_fetch_assoc($res))
 			'ODD_EVEN' => !($i++ % 2) ? 'odd' : 'even',
 			'URL' => $system->SETTINGS['siteurl'] . 'item.php?id=' . $row['id'],
 			'TITLE' => $row['title'],
-			'SHIPPING' => ($row['shipping'] == 2) ? $system->print_money($row['shipping_cost']) : $system->print_money(0),
-			'ADDITIONAL_SHIPPING_COST' => $system->print_money($row['additional_shipping_cost'] * ($row['qty'] - 1)),
-			'ADDITIONAL_SHIPPING' => $system->print_money($row['additional_shipping_cost']),
+			'SHIPPING' => ($row['shipping'] == 1) ? $system->print_money($row['shipping_cost']+($row['shipping_cost_additional'] * ($row['qty'] - 1))) : $system->print_money(0),
+			'ADDITIONAL_SHIPPING_COST' => $system->print_money($row['shipping_cost_additional'] * ($row['qty'] - 1)),
+			'ADDITIONAL_SHIPPING' => $system->print_money($row['shipping_cost_additional']),
 			'ADDITIONAL_SHIPPING_QUANTITYS' => $row['qty'] - 1,
 			'QUANTITY' => $row['qty'],
 			'BID' => $system->print_money($row['bid'] * $row['qty']),
-			'TOTAL' => $system->print_money($row['shipping_cost'] + ($row['bid'] * $row['qty']) + ($row['additional_shipping_cost'] * ($row['qty'] - 1))),
+			'TOTAL' => $system->print_money($row['shipping_cost'] + ($row['bid'] * $row['qty']) + ($row['shipping_cost_additional'] * ($row['qty'] - 1))),
 			'ID' => $row['id'],
 			'WINID'=> $row['winid'],
 

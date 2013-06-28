@@ -25,17 +25,17 @@ ul	{ padding-left: 20px; list-style: url(img/bullet.gif) none; line-height: 1em;
 .table-bar a:active	{ color: #BA1D1D; }
 
 /* NEW CSS (eventaully ill remove all the junk above) */
+* {
+	margin: 0;
+	padding: 0;
+}
+
 body {
 	color: #131313;
 	background-color:#D0E2EC;
 	margin: 0 auto;
-}
-
-* {
 	font-family: Tahoma, Geneva, sans-serif;
 	font-size: 12px;
-	margin: 0;
-	padding: 0;
 }
 
 .wrapper {
