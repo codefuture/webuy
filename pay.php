@@ -15,211 +15,221 @@
 include 'common.php';
 
 // If user is not logged in redirect to login page
-if (!$user->is_logged_in() && $_GET['a'] != 3)
-{
-	header('location: user_login.php');
-	exit;
-}
+	if (!$user->is_logged_in() && $_GET['a'] != 3){
+		header('location: user_login.php');
+		exit;
+	}
 
-$query = "SELECT * FROM " . $DBPrefix . "gateways LIMIT 1";
-$res = mysql_query($query);
-$system->check_mysql($res, $query, __LINE__, __FILE__);
-$gateway_data = mysql_fetch_assoc($res);
+	$query = "SELECT *
+				FROM " . $DBPrefix . "gateways 
+				LIMIT 1";
+	$res = mysql_query($query);
+	$system->check_mysql($res, $query, __LINE__, __FILE__);
+	$gateway_data = mysql_fetch_assoc($res);
+
+	$pp_paytoemail = $gateway_data['paypal_address'];
+	$an_paytoid = $gateway_data['authnet_address'];
+	$an_paytopass = $gateway_data['authnet_password'];
+	$wp_paytoid = $gateway_data['worldpay_id'];
+	$tc_paytoid = $gateway_data['toocheckout_id'];
+	$mb_paytoemail = $gateway_data['moneybookers_address'];
+
 
 $fees = new fees;
 
-switch($_GET['a'])
-{
-	case 1: // add to account balance
-		$pp_paytoemail = $gateway_data['paypal_address'];
-		$an_paytoid = $gateway_data['authnet_address'];
-		$an_paytopass = $gateway_data['authnet_password'];
-		$wp_paytoid = $gateway_data['worldpay_id'];
-		$tc_paytoid = $gateway_data['toocheckout_id'];
-		$mb_paytoemail = $gateway_data['moneybookers_address'];
+switch($_GET['a']){
+
+// add to account balance
+	case 1:
 		$payvalue = $system->input_money($_POST['pfval']);
 		$custoncode = $user->user_data['id'] . 'WEBID1';
 		$message = sprintf($MSG['582'], $system->print_money($payvalue));
 		$title = $system->SETTINGS['sitename'] . ' - ' . $MSG['935'];
 		$fees->add_to_account($MSG['935'], 'balance', $payvalue);
 		break;
-	case 2: // pay for an item
+
+// pay for an item
+	case 2: 
 		$query = "SELECT w.id, a.title, a.shipping_cost, a.shipping_cost_additional, a.shipping, w.bid, u.paypal_email, u.authnet_id, u.authnet_pass,
 				u.id As uid, u.nick, a.payment, u.worldpay_id, u.toocheckout_id, u.moneybookers_email, w.qty
 				FROM " . $DBPrefix . "auctions a
 				LEFT JOIN " . $DBPrefix . "winners w ON (a.id = w.auction)
 				LEFT JOIN " . $DBPrefix . "users u ON (u.id = w.seller)
-				WHERE a.id = " . intval($_POST['pfval']);
+				WHERE a.id = " . intval($_POST['pfval']) . " AND w.paid != 1";
+
 		$res = mysql_query($query);
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
 
-		// check its real
-		if (mysql_num_rows($res) < 1)
-		{
+	// check its real
+		if (mysql_num_rows($res) < 1){
 			header('location: outstanding.php');
 			exit;
 		}
 
 		$data = mysql_fetch_assoc($res);
-		$payment = explode(', ', $data['payment']);
-		$pp_paytoemail = (in_array('paypal', $payment)) ? $data['paypal_email'] : '';
-		$extrastring = sprintf($MSG['778'], $data['uid'], $data['nick']);
-		$an_paytoid = (in_array('authnet', $payment)) ? $data['authnet_id'] : '';
-		$an_paytopass = (in_array('authnet', $payment)) ? $data['authnet_pass'] : '';
-		$wp_paytoid = (in_array('worldpay', $payment)) ? $data['worldpay_id'] : '';
-		$tc_paytoid = (in_array('toocheckout', $payment)) ? $data['toocheckout_id'] : '';
-		$mb_paytoemail = (in_array('moneybookers', $payment)) ? $data['moneybookers_email'] : '';
-		$additional_shipping = $data['additional_shipping_cost'] * ($data['qty'] - 1);
-		$shipping_cost = ($shipping == 1) ? ($data['shipping_cost'] + $additional_shipping) : 0;
+
+		$payment = array();
+		$payment['loop'] = explode(', ', $data['payment']);
+		$payment['options'] = unserialize($system->SETTINGS['payment_options']);
+		foreach($payment['loop'] as $k => $v){
+			if(isset($payment['options'][$v])){
+				$payment[strtolower($payment['options'][$v])] = 0;
+			}
+		}
+
+		$pp_paytoemail	= isset($payment['paypal']) ? $data['paypal_email'] : '';
+		$an_paytoid		= isset($payment['authnet']) ? $data['authnet_id'] : '';
+		$an_paytopass	= isset($payment['authnet']) ? $data['authnet_pass'] : '';
+		$wp_paytoid		= isset($payment['worldpay']) ? $data['worldpay_id'] : '';
+		$tc_paytoid		= isset($payment['toocheckout']) ? $data['toocheckout_id'] : '';
+		$mb_paytoemail	= isset($payment['moneybookers']) ? $data['moneybookers_email'] : '';
+		unset($payment);
+
+		$additional_shipping = $data['shipping_cost_additional'] * ($data['qty'] - 1);
+		$shipping_cost = ($data['shipping'] == 1) ? ($data['shipping_cost'] + $additional_shipping) : 0;
 		$payvalue = ($data['bid'] * $data['qty']) + $shipping_cost;
+
 		$custoncode = $data['id'] . 'WEBID2';
 		$message = sprintf($MSG['581'], $system->print_money($payvalue));
 		$title = $system->SETTINGS['sitename'] . ' - ' . $data['title'];
+		$extrastring = sprintf($MSG['778'], $data['uid'], $data['nick']);
 		break;
-	case 3: // pay signup fee (live mode)
-		if (!isset($_SESSION['signup_id']) || !is_int($_SESSION['signup_id']) || $_SESSION['signup_id'] < 1 || $system->SETTINGS['fee_type'] != 2)
-		{
+
+// pay signup fee (live mode)
+	case 3: 
+		if (!isset($_SESSION['signup_id']) || !is_int($_SESSION['signup_id']) || $_SESSION['signup_id'] < 1 || $system->SETTINGS['fee_type'] != 2){
 			header('location: index.php');
 			exit;
 		}
-		$pp_paytoemail = $gateway_data['paypal_address'];
-		$an_paytoid = $gateway_data['authnet_address'];
-		$an_paytopass = $gateway_data['authnet_password'];
-		$wp_paytoid = $gateway_data['worldpay_id'];
-		$tc_paytoid = $gateway_data['toocheckout_id'];
-		$mb_paytoemail = $gateway_data['moneybookers_address'];
-		$query = "SELECT value FROM " . $DBPrefix . "fees WHERE type = 'signup_fee'";
+
+		$query = "SELECT value
+					FROM " . $DBPrefix . "fees 
+					WHERE type = 'signup_fee'";
 		$res = mysql_query($query);
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
 		$payvalue = mysql_result($res, 0);
+
 		$custoncode = $_SESSION['signup_id'] . 'WEBID3';
 		$message = sprintf($MSG['583'], $system->print_money($payvalue));
 		$title = $system->SETTINGS['sitename'] . ' - ' . $MSG['430'];
 		$fees->add_to_account($MSG['768'], 'signup_fee', $payvalue);
 		break;
-	case 4: // pay auction fee (live mode)
-		if (isset($_GET['auction_id']))
-		{
+
+// pay auction fee (live mode)
+	case 4:
+
+		if (isset($_GET['auction_id'])){
 			$_SESSION['auction_id'] = intval($_GET['auction_id']);
 		}
-		if (!isset($_SESSION['auction_id']) || $_SESSION['auction_id'] < 1 || $system->SETTINGS['fee_type'] != 2)
-		{
+		if (!isset($_SESSION['auction_id']) || $_SESSION['auction_id'] < 1 || $system->SETTINGS['fee_type'] != 2){
 			header('location: index.php');
 			exit;
 		}
-		$pp_paytoemail = $gateway_data['paypal_address'];
-		$an_paytoid = $gateway_data['authnet_address'];
-		$an_paytopass = $gateway_data['authnet_password'];
-		$wp_paytoid = $gateway_data['worldpay_id'];
-		$tc_paytoid = $gateway_data['toocheckout_id'];
-		$mb_paytoemail = $gateway_data['moneybookers_address'];
+
 		$query = "SELECT total, useracc_id FROM " . $DBPrefix . "useraccounts WHERE auc_id = " . $_SESSION['auction_id'] . " AND user_id = " . $user->user_data['id'];
 		$res = mysql_query($query);
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
 		$payvalue = mysql_result($res, 0, 'total');
 		$invoice_id = mysql_result($res, 0, 'useracc_id');
+
 		$custoncode = $invoice_id . 'WEBID4';
 		$message = sprintf($MSG['590'], $system->print_money($payvalue));
 		$title = $system->SETTINGS['sitename'] . ' - ' . $MSG['432'];
 		$fees->add_to_account($MSG['432'], 'setup', $payvalue);
 		break;
-	case 5: // pay relist fee (live mode)
-		$pp_paytoemail = $gateway_data['paypal_address'];
-		$an_paytoid = $gateway_data['authnet_address'];
-		$an_paytopass = $gateway_data['authnet_password'];
-		$wp_paytoid = $gateway_data['worldpay_id'];
-		$tc_paytoid = $gateway_data['toocheckout_id'];
-		$mb_paytoemail = $gateway_data['moneybookers_address'];
-		// number of auctions to relist
-		$query = "SELECT COUNT(*) FROM " . $DBPrefix . "auctions WHERE suspended = 8 AND user = " . $user->user_data['id'];
+
+// pay relist fee (live mode)
+	case 5:
+
+	// number of auctions to relist
+		$query = "SELECT COUNT(*) 
+					FROM " . $DBPrefix . "auctions 
+					WHERE suspended = 8 AND user = " . $user->user_data['id'];
 		$res = mysql_query($query);
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
 		$count = mysql_result($res, 0);
-		// get relist fee
+	// get relist fee
 		$query = "SELECT value FROM " . $DBPrefix . "fees WHERE type = 'relist_fee'";
 		$res = mysql_query($query);
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
 		$relist_fee = mysql_result($res, 0);
 		$payvalue = $relist_fee * $count;
+
 		$custoncode = $user->user_data['id'] . 'WEBID5';
 		$message = sprintf($MSG['591'], $system->print_money($payvalue));
 		$title = $system->SETTINGS['sitename'] . ' - ' . $MSG['437'];
 		$fees->add_to_account($MSG['437'], 'relist_fee', $payvalue);
 		break;
-	case 6: // pay buyer fee (live mode)
-		if (isset($_GET['auction_id']))
-		{
+
+// pay buyer fee (live mode)
+	case 6: 
+		if (isset($_GET['auction_id'])){
 			$_SESSION['auction_id'] = intval($_GET['auction_id']);
 		}
-		if (!isset($_SESSION['auction_id']) || $_SESSION['auction_id'] < 1 || $system->SETTINGS['fee_type'] != 2)
-		{
+		if (!isset($_SESSION['auction_id']) || $_SESSION['auction_id'] < 1 || $system->SETTINGS['fee_type'] != 2){
 			header('location: index.php');
 			exit;
 		}
-		$pp_paytoemail = $gateway_data['paypal_address'];
-		$an_paytoid = $gateway_data['authnet_address'];
-		$an_paytopass = $gateway_data['authnet_password'];
-		$wp_paytoid = $gateway_data['worldpay_id'];
-		$tc_paytoid = $gateway_data['toocheckout_id'];
-		$mb_paytoemail = $gateway_data['moneybookers_address'];
-		$query = "SELECT current_bid FROM " . $DBPrefix . "auctions WHERE id = " . $_SESSION['auction_id'];
+
+		$query = "SELECT current_bid 
+					FROM " . $DBPrefix . "auctions 
+					WHERE id = " . $_SESSION['auction_id'];
 		$res = mysql_query($query);
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
 		$final_value = mysql_result($res, 0);
-		$query = "SELECT value, fee_type FROM " . $DBPrefix . "fees WHERE type = 'buyer_fee'";
+
+		$query = "SELECT value, fee_type 
+					FROM " . $DBPrefix . "fees 
+					WHERE type = 'buyer_fee'";
 		$res = mysql_query($query);
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
 		$row = mysql_result($res, 0);
-		if ($row['fee_type'] == 'flat')
-		{
+
+		if ($row['fee_type'] == 'flat'){
 			$fee_value = $row['value'];
-		}
-		else
-		{
+		}else{
 			$fee_value = ($row['value'] / 100) * floatval($final_value);
 		}
+
 		$custoncode = $_SESSION['auction_id'] . 'WEBID6';
 		$message = sprintf($MSG['776'], $system->print_money($payvalue));
 		$title = $system->SETTINGS['sitename'] . ' - ' . $MSG['775'];
 		$fees->add_to_account($MSG['775'], 'buyer_fee', $payvalue);
 		break;
-	case 7: // pay final value fee (live mode)
-		if (isset($_GET['auction_id']))
-		{
+
+// pay final value fee (live mode)
+	case 7: 
+		if (isset($_GET['auction_id'])){
 			$_SESSION['auction_id'] = intval($_GET['auction_id']);
 		}
-		if (!isset($_SESSION['auction_id']) || $_SESSION['auction_id'] < 1 || $system->SETTINGS['fee_type'] != 2)
-		{
+		if (!isset($_SESSION['auction_id']) || $_SESSION['auction_id'] < 1 || $system->SETTINGS['fee_type'] != 2){
 			header('location: index.php');
 			exit;
 		}
-		$pp_paytoemail = $gateway_data['paypal_address'];
-		$an_paytoid = $gateway_data['authnet_address'];
-		$an_paytopass = $gateway_data['authnet_password'];
-		$wp_paytoid = $gateway_data['worldpay_id'];
-		$tc_paytoid = $gateway_data['toocheckout_id'];
-		$mb_paytoemail = $gateway_data['moneybookers_address'];
-		$query = "SELECT current_bid FROM " . $DBPrefix . "auctions WHERE user = " . $user->user_data['id'] . " AND id = " . $_SESSION['auction_id'];
+
+		$query = "SELECT current_bid
+					FROM " . $DBPrefix . "auctions 
+					WHERE user = " . $user->user_data['id'] . " AND id = " . $_SESSION['auction_id'];
 		$res = mysql_query($query);
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
 		$final_value = mysql_result($res, 0);
-		$query = "SELECT * FROM " . $DBPrefix . "fees WHERE type = 'endauc_fee' ORDER BY value ASC";
+
+		$query = "SELECT * 
+					FROM " . $DBPrefix . "fees 
+					WHERE type = 'endauc_fee' 
+					ORDER BY value ASC";
 		$res = mysql_query($query);
 		$system->check_mysql($res, $query, __LINE__, __FILE__);
-		while ($row = mysql_fetch_assoc($res))
-		{
-			if ($final_value > $row['fee_from'] && $final_value < $row['fee_to'])
-			{
-				if ($row['fee_type'] == 'flat')
-				{
+		while ($row = mysql_fetch_assoc($res)){
+			if ($final_value > $row['fee_from'] && $final_value < $row['fee_to']){
+				if ($row['fee_type'] == 'flat'){
 					$payvalue = $row['value'];
-				}
-				else
-				{
+				}else{
 					$payvalue = ($row['value'] / 100) * $final_value;
 				}
 			}
 		}
+
 		$custoncode = $_SESSION['auction_id'] . 'WEBID7';
 		$message = sprintf($MSG['776'], $system->print_money($payvalue));
 		$title = $system->SETTINGS['sitename'] . ' - ' . $MSG['791'];
